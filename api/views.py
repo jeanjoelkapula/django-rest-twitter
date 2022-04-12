@@ -5,6 +5,7 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from .serializers import *  
+from .services import *
 
 class RegistrationView(generics.CreateAPIView):
     serializer_class = RegistrationSerializer
@@ -85,4 +86,25 @@ class PostCreateView(generics.CreateAPIView):
             }
 
             return Response(context)
-        
+
+class PostEditView(generics.RetrieveUpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PostSerializer
+
+    def put(self, request, post_id):
+        serializer = self.serializer_class(data=request.data, context={'user': request.user, 'post_id':post_id})
+
+        if serializer.is_valid():
+            result = serializer.edit_post()
+
+            return Response(result)
+        else:
+            return Response({'errors': serializer.errors})
+    
+    def get(self, request, post_id):
+        post = PostService.get_post(post_id)
+
+        if post is not None:
+            return Response(self.serializer_class(post).data)
+        else:
+            return Response({'error': 'Post not found'})

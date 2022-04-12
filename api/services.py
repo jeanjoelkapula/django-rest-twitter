@@ -23,6 +23,14 @@ class PostService():
         except Post.DoesNotExist:
             return {"success": False, "message": "The post does not exist"}
     
+    @staticmethod
+    def get_post(post_id):
+        try:
+            post = Post.objects.get(id=post_id)
+
+            return post
+        except Post.DoesNotExist:
+            return None
 
     @staticmethod
     def update_post_like(user, post_id, liked):
@@ -38,7 +46,7 @@ class PostService():
             return {"success": False, "message": "The post does not exist"}
     
     @staticmethod
-    def remove_post_like(user, post_id):
+    def update_post_dislike(user, post_id):
         try:
             post = Post.objects.get(id=post_id)
 

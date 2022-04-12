@@ -32,6 +32,7 @@ class UserAccountSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     user = UserAccountSerializer(read_only=True)
+
     class Meta:
         model = Post
         fields = '__all__'
@@ -41,3 +42,15 @@ class PostSerializer(serializers.ModelSerializer):
     def save(self):
         post, created = PostService.create_post(user=self.context['user'], post=self.validated_data['post'])
         return post
+    
+    def edit_post(self):
+        result = PostService.edit_post(user=self.context['user'], post_id=self.context['post_id'], content=self.validated_data['post'])
+        
+        return result
+        
+class PostLikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostLike
+        fields = ['is_like']
+        
+    
