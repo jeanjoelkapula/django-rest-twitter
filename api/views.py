@@ -8,6 +8,7 @@ from .serializers import *
 
 class RegistrationView(generics.CreateAPIView):
     serializer_class = RegistrationSerializer
+    
     def post(self, request):
         serializer =  self.serializer_class(data=request.data)
 
@@ -16,9 +17,9 @@ class RegistrationView(generics.CreateAPIView):
             token, created = Token.objects.get_or_create(user=user)
 
             login(request, user)
-            user_serializer = UserAccountSerialier(user)
+            user_serializer = UserAccountSerializer(user)
             context = {
-                "success": "user account created", 
+                "success": "user account successfully created", 
                 "auth": {
                     "user": user_serializer.data,
                     "token": token.key
@@ -43,7 +44,7 @@ class LoginView(generics.CreateAPIView):
 
                 return Response({
                     "auth": {
-                        "user": UserAccountSerialier(user).data,
+                        "user": UserAccountSerializer(user).data,
                         "token": token.key
                     }
                 })
@@ -61,5 +62,27 @@ class LogoutView(generics.RetrieveAPIView):
         logout(request)
 
         return Response({'success': 'User logged out successfully'})
-        
+
+class PostCreateView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PostSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data, context={'user': request.user})
+
+        if serializer.is_valid():
+            post = serializer.save()
+
+            context = {
+                'success': 'Post was successfully created',
+                'post': self.serializer_class(post).data
+            }
+
+            return Response(context)
+        else:
+            context = {
+                'errors': serializer.errors,
+            }
+
+            return Response(context)
         

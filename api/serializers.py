@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate, login
 from .models import * 
+from .services import *
 
 class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
@@ -22,9 +23,21 @@ class LoginSerializer(serializers.Serializer):
     )
     
 
-class UserAccountSerialier(serializers.ModelSerializer):
-    
+class UserAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'email']
+        read_only_fields = ['username', 'email']
         depth = 1
+
+class PostSerializer(serializers.ModelSerializer):
+    user = UserAccountSerializer(read_only=True)
+    class Meta:
+        model = Post
+        fields = '__all__'
+        read_only_fields = ['date_created']
+        depth = 1
+    
+    def save(self):
+        post, created = PostService.create_post(user=self.context['user'], post=self.validated_data['post'])
+        return post
