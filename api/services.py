@@ -61,3 +61,8 @@ class PostService():
 
         except Post.DoesNotExist:
             return {"success": False, "message": "The post does not exist"}
+    
+    @staticmethod
+    def get_all_posts():
+        posts = Post.objects.all()
+        return posts

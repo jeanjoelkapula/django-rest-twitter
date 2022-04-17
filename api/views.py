@@ -50,7 +50,7 @@ class LoginView(generics.CreateAPIView):
                     }
                 })
             else:
-                return Response({'errors': serializer.errors})
+                return Response({'error': 'Invalid credentials'})
         else:
             return Response({'errors': serializer.errors})
 
@@ -63,6 +63,17 @@ class LogoutView(generics.RetrieveAPIView):
         logout(request)
 
         return Response({'success': 'User logged out successfully'})
+
+class PostsRetrieveView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PostSerializer 
+    queryset = PostService.get_all_posts()
+
+    def get(self, request):
+        posts = PostService.get_all_posts()
+        serializer = self.serializer_class(self.get_queryset(), many=True)
+
+        return Response(serializer.data)
 
 class PostCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
@@ -108,3 +119,17 @@ class PostEditView(generics.RetrieveUpdateAPIView):
             return Response(self.serializer_class(post).data)
         else:
             return Response({'error': 'Post not found'})
+
+class PostLikeView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PostLikeSerializer
+
+    def put (self, request, post_id):
+        serializer = self.serializer_class(data=request.data, context={'user': request.user, 'post_id':post_id})
+    
+        if serializer.is_valid():
+            result = serializer.update_post_like()
+
+            return Response(result)
+
+        

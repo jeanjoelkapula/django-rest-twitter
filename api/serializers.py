@@ -52,5 +52,12 @@ class PostLikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostLike
         fields = ['is_like']
+
+    
+    def update_post_like(self):
+        print(self.validated_data)
+        result = PostService.update_post_like(user=self.context['user'], post_id=self.context['post_id'], liked=self.validated_data['is_like'])
+
+        return result
         
     
