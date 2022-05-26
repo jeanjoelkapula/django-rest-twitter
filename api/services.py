@@ -63,6 +63,23 @@ class PostService():
             return {"success": False, "message": "The post does not exist"}
     
     @staticmethod
+    def is_post_liked(post_id, user):
+        try:
+            post = Post.objects.get(id=post_id)
+
+            try:
+                post_like = PostLike.objects.get(user=user, post=post)
+                return post_like.is_like
+
+            except PostLike.DoesNotExist:
+                return False           
+
+        except Post.DoesNotExist:
+            return {"success": False, "message": "The post does not exist"}
+            
+    @staticmethod
     def get_all_posts():
         posts = Post.objects.all()
         return posts
+    
+

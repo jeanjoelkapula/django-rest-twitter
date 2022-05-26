@@ -32,6 +32,7 @@ class UserAccountSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     user = UserAccountSerializer(read_only=True)
+    date_created = serializers.DateTimeField(format="%b.%d.%Y, %H:%M %p")
 
     class Meta:
         model = Post

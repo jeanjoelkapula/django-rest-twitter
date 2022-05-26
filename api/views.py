@@ -50,19 +50,42 @@ class LoginView(generics.CreateAPIView):
                     }
                 })
             else:
-                return Response({'error': 'Invalid credentials'})
+                return Response({
+                    'errors': {
+                        'messages': ['Invalid credentials']
+                    }
+                })
         else:
             return Response({'errors': serializer.errors})
 
 class LogoutView(generics.RetrieveAPIView):
-    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        request.user.auth_token.delete()
+        if request.user.is_authenticated:
+            Token.objects.filter(user=request.user).delete()
 
-        logout(request)
+            logout(request)
 
         return Response({'success': 'User logged out successfully'})
+
+class PostRecordsView(generics.ListAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+    def list(self, request):
+        queryset = self.get_queryset()
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            for item in serializer.data:
+                is_liked = {}
+                is_liked['is_liked'] = PostService.is_post_liked(item['id'], request.user)
+                item.update(is_liked)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 class PostsRetrieveView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
@@ -118,7 +141,11 @@ class PostEditView(generics.RetrieveUpdateAPIView):
         if post is not None:
             return Response(self.serializer_class(post).data)
         else:
-            return Response({'error': 'Post not found'})
+            return Response({
+                'errors': {
+                    'messages': ['Post not found']
+                }
+            })
 
 class PostLikeView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
