@@ -80,9 +80,22 @@ class PostRecordsView(generics.ListAPIView):
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             for item in serializer.data:
-                is_liked = {}
-                is_liked['is_liked'] = PostService.is_post_liked(item['id'], request.user)
-                item.update(is_liked)
+                result = PostService.is_post_liked(item['id'], request.user)
+                like_dict = {}
+                if (result == True):
+                    like_dict['is_liked'] = True
+                    like_dict['is_disliked'] = False
+
+                    like_dict['is_liked'] = False
+
+                if (result == False):
+                    like_dict['is_liked'] = False
+                    like_dict['is_disliked'] = True
+                
+                if (result is None):
+                    like_dict['is_liked'] = False
+                    like_dict['is_disliked'] = False
+                item.update(like_dict)
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)

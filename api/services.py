@@ -72,7 +72,7 @@ class PostService():
                 return post_like.is_like
 
             except PostLike.DoesNotExist:
-                return False           
+                return None           
 
         except Post.DoesNotExist:
             return {"success": False, "message": "The post does not exist"}
