@@ -79,7 +79,7 @@ class PostService():
             
     @staticmethod
     def get_all_posts():
-        posts = Post.objects.all()
+        posts = Post.objects.all().order_by('-date_created')
         return posts
     
 

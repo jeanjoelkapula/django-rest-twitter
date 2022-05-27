@@ -69,7 +69,8 @@ class LogoutView(generics.RetrieveAPIView):
         return Response({'success': 'User logged out successfully'})
 
 class PostRecordsView(generics.ListAPIView):
-    queryset = Post.objects.all()
+    permission_classes = [IsAuthenticated]
+    queryset = PostService.get_all_posts()
     serializer_class = PostSerializer
 
     def list(self, request):
@@ -85,17 +86,6 @@ class PostRecordsView(generics.ListAPIView):
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
-class PostsRetrieveView(generics.RetrieveAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = PostSerializer 
-    queryset = PostService.get_all_posts()
-
-    def get(self, request):
-        posts = PostService.get_all_posts()
-        serializer = self.serializer_class(self.get_queryset(), many=True)
-
         return Response(serializer.data)
 
 class PostCreateView(generics.CreateAPIView):
