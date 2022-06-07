@@ -1,3 +1,4 @@
+from urllib import response
 from rest_framework import generics
 from rest_framework.response import Response
 from django.contrib.auth import authenticate, login, logout
@@ -22,7 +23,7 @@ class RegistrationView(generics.CreateAPIView):
             context = {
                 "success": "user account successfully created", 
                 "auth": {
-                    "user": user_serializer.data,
+                    "user": user_serializer.get_details(context={'user': user}),
                     "token": token.key
                 }
             }
@@ -42,10 +43,10 @@ class LoginView(generics.CreateAPIView):
             if user is not None:
                 login(request, user)
                 token, created = Token.objects.get_or_create(user=user)
-
+                serializer = self.get_serializer()
                 return Response({
                     "auth": {
-                        "user": UserAccountSerializer(user).data,
+                        "user": UserAccountSerializer(context={'user': user}).get_details(),
                         "token": token.key
                     }
                 })
@@ -68,6 +69,46 @@ class LogoutView(generics.RetrieveAPIView):
 
         return Response({'success': 'User logged out successfully'})
 
+class UserProfileView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserAccountSerializer
+
+    def get(self, request, username):
+        serializer = self.get_serializer()
+        result = UserService.get_profile(username)
+
+        if result['success']:
+            return Response(UserAccountSerializer(context={'user': result['user']}).get_details())
+        else:
+            return Response({
+                'errors': {
+                    'messages': [result['message']]
+                }
+            }) 
+class FollowUserView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = FollowSerializer
+
+    def put(self, request, username):
+        serializer = FollowSerializer(context={'user': request.user, 'followee': username}, data=request.data)
+
+        if serializer.is_valid():
+            result = serializer.follow_user()
+            if result['success']:
+                data = {
+                    'follower': UserAccountSerializer(context={'user': request.user}).get_details(),
+                    'followee': UserAccountSerializer(context={'user': result['user']}).get_details()
+                }
+                return Response(data)
+            else:
+                return Response({
+                    'errors': {
+                        'messages': [result['message']]
+                    }
+                })
+        else:
+            return Response({'errors': serializer.errors})
+
 class PostRecordsView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     queryset = PostService.get_all_posts()
@@ -86,8 +127,6 @@ class PostRecordsView(generics.ListAPIView):
                     like_dict['is_liked'] = True
                     like_dict['is_disliked'] = False
 
-                    like_dict['is_liked'] = False
-
                 if (result == False):
                     like_dict['is_liked'] = False
                     like_dict['is_disliked'] = True
@@ -95,11 +134,62 @@ class PostRecordsView(generics.ListAPIView):
                 if (result is None):
                     like_dict['is_liked'] = False
                     like_dict['is_disliked'] = False
+
+                like_dict['like_count'] = PostService.get_like_count(item['id'])
+                like_dict['dislike_count'] = PostService.get_dislike_count(item['id'])
                 item.update(like_dict)
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+class UserPostRecordsView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PostSerializer
+
+    def get_queryset(self):
+        un = self.kwargs['username']
+        result = PostService.get_user_posts(un)
+
+        return result 
+
+    def list(self, request, username):
+        result = self.get_queryset()
+
+        if (result['success']):
+            queryset = result['posts']
+
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                for item in serializer.data:
+                    result = PostService.is_post_liked(item['id'], request.user)
+                    like_dict = {}
+                    if (result == True):
+                        like_dict['is_liked'] = True
+                        like_dict['is_disliked'] = False
+
+                    if (result == False):
+                        like_dict['is_liked'] = False
+                        like_dict['is_disliked'] = True
+                    
+                    if (result is None):
+                        like_dict['is_liked'] = False
+                        like_dict['is_disliked'] = False
+
+                    like_dict['like_count'] = PostService.get_like_count(item['id'])
+                    like_dict['dislike_count'] = PostService.get_dislike_count(item['id'])
+                    item.update(like_dict)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({
+                'errors': {
+                    'messages': [result['message']]
+                }
+            })
 
 class PostCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
@@ -149,6 +239,26 @@ class PostEditView(generics.RetrieveUpdateAPIView):
                     'messages': ['Post not found']
                 }
             })
+
+
+class PostUnLikeView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PostUnlikeSerializer
+
+    def put (self, request, post_id):
+        serializer = self.serializer_class(data=request.data, context={'user': request.user, 'post_id':post_id})
+    
+        if serializer.is_valid():
+            result = serializer.unlike_post()
+
+            if result['success']:
+                return Response(result)
+            else:
+                return Response({
+                    'errors':{
+                        'messages': [result.message]
+                    }
+                })
 
 class PostLikeView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
