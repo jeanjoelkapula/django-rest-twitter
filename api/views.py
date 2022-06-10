@@ -143,6 +143,40 @@ class PostRecordsView(generics.ListAPIView):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+class FollowingPostRecords(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = PostService.get_all_posts()
+    serializer_class = PostSerializer
+
+    def list(self, request):
+        queryset = PostService.get_following_posts(request.user)
+        print(queryset)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            for item in serializer.data:
+                result = PostService.is_post_liked(item['id'], request.user)
+                like_dict = {}
+                if (result == True):
+                    like_dict['is_liked'] = True
+                    like_dict['is_disliked'] = False
+
+                if (result == False):
+                    like_dict['is_liked'] = False
+                    like_dict['is_disliked'] = True
+                
+                if (result is None):
+                    like_dict['is_liked'] = False
+                    like_dict['is_disliked'] = False
+
+                like_dict['like_count'] = PostService.get_like_count(item['id'])
+                like_dict['dislike_count'] = PostService.get_dislike_count(item['id'])
+                item.update(like_dict)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+        
 class UserPostRecordsView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PostSerializer

@@ -133,6 +133,12 @@ class PostService():
         return posts
     
     @staticmethod
+    def get_following_posts(user):
+        posts = Post.objects.filter(user__in=user.followees.all())
+
+        return posts
+    
+    @staticmethod
     def get_user_posts(username):
         try:
             user = User.objects.get(username=username)
