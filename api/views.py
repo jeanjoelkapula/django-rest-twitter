@@ -1,4 +1,5 @@
 from urllib import response
+from django.shortcuts import render
 from rest_framework import generics
 from rest_framework.response import Response
 from django.contrib.auth import authenticate, login, logout
@@ -305,5 +306,24 @@ class PostLikeView(generics.UpdateAPIView):
             result = serializer.update_post_like()
 
             return Response(result)
+
+class ChatRetrieveView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ChatSerializer
+
+    def get_queryset(self):
+        return ChatService().get_chats(self.request.user)
+
+    def get(self, request):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many=True, context={'request':request})
+        data = serializer.data
+
+        return Response({
+            'chats':data
+        })
+
+def index(request):
+    return render(request, "index.html")
 
         

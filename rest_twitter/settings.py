@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+from .util import parse_redis_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,6 +33,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -40,7 +43,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-    'api'
+    'api',
+    'channels'
 ]
 
 REST_FRAMEWORK = {
@@ -88,7 +92,34 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'rest_twitter.wsgi.application'
+ASGI_APPLICATION = 'rest_twitter.asgi.application'
+'''
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+'''
+ 
+REDIS_URL = os.environ.get('REDIS_URL', default='redis://localhost:6379')
+REDIS_HOST, REDIS_PORT, REDIS_USER, REDIS_PASSWORD, REDIS_DB = parse_redis_url(REDIS_URL)
 
+# DJANGO CHANNELS
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [{
+                'address': f'redis://{REDIS_HOST}:{REDIS_PORT}',
+                'db': REDIS_DB,
+                'password': REDIS_PASSWORD,
+            }],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases

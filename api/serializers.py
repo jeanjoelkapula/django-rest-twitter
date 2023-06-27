@@ -1,8 +1,8 @@
-from pyexpat import model
 from rest_framework import serializers
 from django.contrib.auth import authenticate, login
 from .models import * 
 from .services import *
+
 
 class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
@@ -93,5 +93,53 @@ class PostLikeSerializer(serializers.ModelSerializer):
         result = PostService.update_post_like(user=self.context['user'], post_id=self.context['post_id'], liked=self.validated_data['is_like'])
 
         return result
+class ChatMessageSerializer(serializers.ModelSerializer):
+    sender = serializers.ReadOnlyField(source="sender.username")
+    recipient = serializers.ReadOnlyField(source="recipient.username")
+    incoming = serializers.SerializerMethodField(method_name="is_incoming")
+    
+    class Meta:
+        model = ChatMessage
+        exclude = ('user','chat',)
+        depth = 1
+    
+    def is_incoming(self, message):
+        incoming = True
         
+        if self.context['request'].user == message.sender:
+            incoming = False
+        
+        return incoming
+    
+class ChatSerializer(serializers.ModelSerializer):
+    chat_messages = serializers.SerializerMethodField()
+    
+    participants = serializers.SlugRelatedField(
+        many=True,
+        read_only=True,
+        slug_field='username'
+    )
+    
+    last_activity = serializers.DateTimeField(format="%b %d %Y, %I:%M %p")
+
+    class Meta:
+        model = Chat
+        fields = ['id','participants','last_activity', 'chat_messages']
+        depth = 1
+    
+    def get(self):
+        return {
+            'id': self.id,
+            'last_activity': self.last_activity.strftime("%b %d %Y, %I:%M %p"),
+            'participants': [{'id': participant.id, 'username': participant.username} for participant in self.participants.all()],
+            'messages': [message.serialize() for message in self.chat_messages.filter(user=self.context['user']).all()]
+        }
+        
+    def get_chat_messages(self, chat):
+        messages = chat.chat_messages.filter(user=self.context['request'].user)
+        serializer = ChatMessageSerializer(messages, many=True, context={'request':self.context['request']})
+        
+        return serializer.data
+
+
     

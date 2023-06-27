@@ -1,5 +1,6 @@
 
 from .models import * 
+from django.db.models import Prefetch
 
 class UserService():
     @staticmethod
@@ -149,5 +150,12 @@ class PostService():
 
         except User.DoesNotExist:
             return {"success": False, "message": f"User with username {username} does not exist"}
+
+class ChatService():
+    @staticmethod
+    def get_chats(user):
+        chats = Chat.objects.filter(participants=user)
+        
+        return chats
     
 

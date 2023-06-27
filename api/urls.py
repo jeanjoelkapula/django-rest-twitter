@@ -13,5 +13,7 @@ urlpatterns = [
     path('post/', PostCreateView.as_view(), name='create_post'),
     path('post/<int:post_id>', PostEditView.as_view(), name="edit_post"),
     path('post/<int:post_id>/like/', PostLikeView.as_view(), name="edit_post_like"),
-    path('post/<int:post_id>/unlike/', PostUnLikeView.as_view(), name="unlike_post")
+    path('post/<int:post_id>/unlike/', PostUnLikeView.as_view(), name="unlike_post"),
+    path('chats/', ChatRetrieveView.as_view(), name="chats"),
+    path('', index, name="index")
 ]
