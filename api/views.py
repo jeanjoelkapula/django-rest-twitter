@@ -20,11 +20,11 @@ class RegistrationView(generics.CreateAPIView):
             token, created = Token.objects.get_or_create(user=user)
 
             login(request, user)
-            user_serializer = UserAccountSerializer(user)
+            user_serializer = UserAccountSerializer(context={'user': user})
             context = {
                 "success": "user account successfully created", 
                 "auth": {
-                    "user": user_serializer.get_details(context={'user': user}),
+                    "user": user_serializer.get_details(),
                     "token": token.key
                 }
             }
