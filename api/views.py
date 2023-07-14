@@ -17,6 +17,8 @@ class RegistrationView(generics.CreateAPIView):
 
         if serializer.is_valid():
             user = serializer.save()
+            user.set_password(serializer.validated_data['password'])
+            user.save()
             token, created = Token.objects.get_or_create(user=user)
 
             login(request, user)
@@ -320,7 +322,8 @@ class ChatRetrieveView(generics.RetrieveAPIView):
         data = serializer.data
 
         return Response({
-            'chats':data
+            'chats':data,
+            'unread_count': ChatService.get_unread_message_count(request.user)
         })
 
 def index(request):

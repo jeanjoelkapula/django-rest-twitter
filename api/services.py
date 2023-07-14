@@ -158,4 +158,7 @@ class ChatService():
         
         return chats
     
+    @staticmethod
+    def get_unread_message_count(user):
+        return ChatMessage.objects.filter(user=user, recipient=user, read=False).count()
 

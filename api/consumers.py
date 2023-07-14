@@ -6,7 +6,7 @@ from .models import *
 from datetime import datetime
 from channels.generic.websocket import WebsocketConsumer
 from .services import ChatService
-from .serializers import ChatSerializer
+from .serializers import ChatMessageSerializer
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
@@ -39,14 +39,24 @@ class ChatConsumer(WebsocketConsumer):
     # Receive message from WebSocket
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        chat = text_data_json['chat']
-    
-        recipient = text_data_json['recipient']
-        message = text_data_json['message']
+        try:
+            chat = text_data_json['chat']
+        
+            recipient = text_data_json['recipient']
+            message = text_data_json['message']
+        except KeyError:
+            # Send message to sender room group
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_group_name,
+                {
+                    'type': 'error_message',
+                    'message': 'Invalid data submitted'
+                }
+            )
         
         #check recipient
         try:
-            user = User.objects.get(pk=int(recipient))
+            user = User.objects.get(username=recipient)
 
             #check if chat exists
             is_chat_new = False
@@ -65,30 +75,33 @@ class ChatConsumer(WebsocketConsumer):
             #create chat messages for inboxes
             sender_message = ChatMessage(user=self.scope['user'], sender=self.scope['user'], recipient=user, message=message, chat=chat_room)
             recipient_message = ChatMessage(user=user, sender=self.scope['user'], recipient=user, message=message, chat=chat_room)
-
             sender_message.save()
             recipient_message.save()
-
+            message_serializer = ChatMessageSerializer(sender_message,context={'user':self.scope['user']})
+            data = message_serializer.data
+            
             # Send message to sender room group
+            data['incoming'] = False
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,
                 {
                     'type': 'chat_message',
-                    'chat': chat_room.serialize(self.scope['user']),
-                    'message': sender_message.serialize(),
+                    'chat': chat_room.id,
+                    'message': data,
                     'total_unread_count': ChatMessage.objects.filter(user=user,recipient=user, read=False).count(),
                     'is_chat_new': is_chat_new
                 }
             )
-
+            
             # Send message to receiver room group
+            data['incoming'] = True
             receiver_room_group = f"inbox_{recipient}"
             async_to_sync(self.channel_layer.group_send)(
                 receiver_room_group,
                 {
                     'type': 'chat_message',
-                    'chat': chat_room.serialize(user),
-                    'message': recipient_message.serialize(),
+                    'chat': chat_room.id,
+                    'message': data,
                     'total_unread_count': ChatMessage.objects.filter(user=user,recipient=user, read=False).count(),
                     'is_chat_new': is_chat_new
                 }

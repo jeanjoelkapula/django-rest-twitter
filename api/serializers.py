@@ -97,6 +97,7 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     sender = serializers.ReadOnlyField(source="sender.username")
     recipient = serializers.ReadOnlyField(source="recipient.username")
     incoming = serializers.SerializerMethodField(method_name="is_incoming")
+    timestamp = serializers.DateTimeField(format="%b %d %Y, %I:%M %p")
     
     class Meta:
         model = ChatMessage
@@ -105,21 +106,18 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     
     def is_incoming(self, message):
         incoming = True
-        
-        if self.context['request'].user == message.sender:
+        if self.context['user'] == message.sender:
             incoming = False
         
         return incoming
     
 class ChatSerializer(serializers.ModelSerializer):
     chat_messages = serializers.SerializerMethodField()
-    
     participants = serializers.SlugRelatedField(
         many=True,
         read_only=True,
         slug_field='username'
     )
-    
     last_activity = serializers.DateTimeField(format="%b %d %Y, %I:%M %p")
 
     class Meta:
@@ -137,7 +135,7 @@ class ChatSerializer(serializers.ModelSerializer):
         
     def get_chat_messages(self, chat):
         messages = chat.chat_messages.filter(user=self.context['request'].user)
-        serializer = ChatMessageSerializer(messages, many=True, context={'request':self.context['request']})
+        serializer = ChatMessageSerializer(messages, many=True, context={'user':self.context['request'].user})
         
         return serializer.data
 
