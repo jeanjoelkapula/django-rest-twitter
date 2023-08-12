@@ -15,5 +15,6 @@ urlpatterns = [
     path('post/<int:post_id>/like/', PostLikeView.as_view(), name="edit_post_like"),
     path('post/<int:post_id>/unlike/', PostUnLikeView.as_view(), name="unlike_post"),
     path('chats/', ChatRetrieveView.as_view(), name="chats"),
+    path('messages/<int:chat_id>/status/', MessagesStatusView.as_view(), name='messages_status'),
     path('', index, name="index")
 ]

@@ -88,7 +88,7 @@ class ChatConsumer(WebsocketConsumer):
                     'type': 'chat_message',
                     'chat': chat_room.id,
                     'message': data,
-                    'total_unread_count': ChatMessage.objects.filter(user=user,recipient=user, read=False).count(),
+                    'total_unread_count': ChatMessage.objects.filter(user=user,recipient=self.scope['user'], read=False).count(),
                     'is_chat_new': is_chat_new
                 }
             )

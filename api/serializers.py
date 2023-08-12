@@ -113,6 +113,7 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     
 class ChatSerializer(serializers.ModelSerializer):
     chat_messages = serializers.SerializerMethodField()
+    unread_count = serializers.SerializerMethodField()
     participants = serializers.SlugRelatedField(
         many=True,
         read_only=True,
@@ -122,7 +123,7 @@ class ChatSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Chat
-        fields = ['id','participants','last_activity', 'chat_messages']
+        fields = ['id','participants','last_activity', 'chat_messages', 'unread_count']
         depth = 1
     
     def get(self):
@@ -139,5 +140,7 @@ class ChatSerializer(serializers.ModelSerializer):
         
         return serializer.data
 
+    def  get_unread_count(self, chat):
+        return chat.chat_messages.filter(user=self.context['request'].user,recipient=self.context['request'].user, read=False).count()
 
     

@@ -326,6 +326,24 @@ class ChatRetrieveView(generics.RetrieveAPIView):
             'unread_count': ChatService.get_unread_message_count(request.user)
         })
 
+class MessagesStatusView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request, chat_id):
+        try:
+            chat = Chat.objects.get(pk=chat_id)
+            ChatService.set_messages_read(chat, request.user)
+            
+            return Response({
+                'message': 'messages successfully updated'
+            })
+        except Chat.DoesNotExist:
+            return Response({
+                    'errors':{
+                        'messages': ['Chat does not exist']
+                    }
+                })
+
 def index(request):
     return render(request, "index.html")
 
