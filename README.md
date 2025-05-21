@@ -30,32 +30,32 @@ This is a fully-featured Django REST API backend for a Twitter-like social media
 ---
 
 ## Project Structure
-
-django-rest-twitter/
-├── api/ # Main Django app: models, API logic, serializers, chat consumers
-│ ├── migrations/ # Database migration history
-│ ├── templates/ # index.html (SPA entry point for frontend)
-│ ├── admin.py # Django admin integration
-│ ├── apps.py # Django app configuration
-│ ├── consumers.py # Django Channels WebSocket consumers (real-time chat)
-│ ├── models.py # Database models: User, Post, PostLike, Chat, ChatMessage
-│ ├── routing.py # ASGI WebSocket routing
-│ ├── serializers.py # DRF serializers for input validation and API output
-│ ├── services.py # Core business logic for users, posts, and chat
-│ ├── tests.py # (To be implemented) Unit and integration tests
-│ ├── urls.py # App-level API routing
-│ ├── views.py # API endpoint implementations
-├── rest_twitter/ # Project settings and ASGI/WSGI config
-│ ├── asgi.py
-│ ├── channels_auth_middleware.py
-│ ├── settings.py
-│ ├── urls.py
-│ ├── util.py
-│ ├── wsgi.py
-├── manage.py # Django project manager
-├── requirements.txt # Python package requirements
-├── README.md 
-
+  ```bash
+  django-rest-twitter/
+  ├── api/ # Main Django app: models, API logic, serializers, chat consumers
+  │ ├── migrations/ # Database migration history
+  │ ├── templates/ # index.html (SPA entry point for frontend)
+  │ ├── admin.py # Django admin integration
+  │ ├── apps.py # Django app configuration
+  │ ├── consumers.py # Django Channels WebSocket consumers (real-time chat)
+  │ ├── models.py # Database models: User, Post, PostLike, Chat, ChatMessage
+  │ ├── routing.py # ASGI WebSocket routing
+  │ ├── serializers.py # DRF serializers for input validation and API output
+  │ ├── services.py # Core business logic for users, posts, and chat
+  │ ├── tests.py # (To be implemented) Unit and integration tests
+  │ ├── urls.py # App-level API routing
+  │ ├── views.py # API endpoint implementations
+  ├── rest_twitter/ # Project settings and ASGI/WSGI config
+  │ ├── asgi.py
+  │ ├── channels_auth_middleware.py
+  │ ├── settings.py
+  │ ├── urls.py
+  │ ├── util.py
+  │ ├── wsgi.py
+  ├── manage.py # Django project manager
+  ├── requirements.txt # Python package requirements
+  ├── README.md 
+  ```
 ---
 
 ## API Overview
